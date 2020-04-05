@@ -38,8 +38,6 @@ void set_matrix(const size_t n, FLOAT_TYPE * const restrict A)
     const FLOAT_TYPE value = 1.0;
     /* Parallel initialization to use "first-touch"
      * memory binding to threads */
-    printf("%li %li\n", n, (size_t)TMPLEN*CHUNKSIZE);
-    assert(!( n % (TMPLEN*CHUNKSIZE)) );
 #pragma omp parallel for private(j,k) schedule(static,LB_LEN)
     for (j = 0;  j < n;  j += TMPLEN*CHUNKSIZE) {
         for (k = j;  k < j+TMPLEN*CHUNKSIZE;  k++) {

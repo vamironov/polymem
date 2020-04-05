@@ -9,9 +9,10 @@
 
 int main(int argc, char* argv[])
 {
-    struct timeval stime, etime, diff;
-    double timeinsec;
-    //double time_st, time_end, time_avg;
+    struct timeval stime, etime, diff, totTime, minTime, maxTime;
+    double timeInSec;
+    double minTimeInSec;
+    double maxTimeInSec;
     double gflop;
 
     FLOAT_TYPE* restrict P;
@@ -38,7 +39,13 @@ int main(int argc, char* argv[])
     printf("Memory usage for single array : %6.3f GB\n", TSIZE*8.0/1024/1024/1024);
     printf("Memory usage for all arrays   : %6.3f GB\n", TSIZE*8.0/1024/1024/1024);
     printf("Loop count                    : %d \n", LOOP_COUNT);
+#if defined(_OPENMP)
     printf("Number of threads             : %d \n", omp_get_max_threads());
+#endif
+
+    gflop = 2.0*n*1E-9*TSIZE;
+    printf("GFlop                         : %.2f \n", gflop);
+
     fflush(stdout);
 
     set_matrix(TSIZE,A);
@@ -49,34 +56,66 @@ int main(int argc, char* argv[])
 
     fflush(stdout);
 
-    FLOAT_TYPE sum[TMPLEN] = {0.0};
+    FLOAT_TYPE sum = 0.0;
     // Heatup
     gettimeofday(&stime, NULL);
 
-    do_test_ro(n, TSIZE, 1, A, sum, P);
+    do_test_ro(n, TSIZE, A, &sum, P);
 
     gettimeofday(&etime,NULL);
     timersub(&etime, &stime, &diff);
-    timeinsec  = (diff.tv_sec*1000+diff.tv_usec/1000)/1000.0;
-    printf("[Heatup time ]: %.1f secs \n", timeinsec);
+    timeInSec  = (diff.tv_sec*1000+diff.tv_usec/1000)/1000.0;
+    printf("[Heatup time ]: %.1f secs \n", timeInSec);
 
     fflush(stdout);
 
     // Production
-    gettimeofday(&stime, NULL);
+    timerclear(&totTime);
+    timerclear(&maxTime);
+    timerclear(&minTime);
+    timeradd(&minTime, &diff, &minTime); // Reuse diff
+    minTime.tv_sec += 1000000;
 
-    do_test_ro(n, TSIZE, LOOP_COUNT, A, sum, P);
+    printf("\n%10s%16s%16s\n", "Iter #", "Time, s", "GFlop/s");
 
-    gettimeofday(&etime,NULL);
-    timersub(&etime, &stime, &diff);
-    timeinsec  = (diff.tv_sec*1000+diff.tv_usec/1000)/1000.0/ LOOP_COUNT;
+    for (int i=0; i<LOOP_COUNT; ++i) {
+        gettimeofday(&stime, NULL);
 
-    gflop = 2.0*n*1E-9*TSIZE;
+        do_test_ro(n, TSIZE, A, &sum, P);
 
-    printf("[Average time]: %.1f secs \n", timeinsec);
-    printf("[Total time  ]: %.1f secs \n", timeinsec*LOOP_COUNT);
-    printf("[GFlop       ]: %.2f \n", gflop);
-    printf("[GFlop/sec   ]: %.2f \n", gflop/timeinsec);
+        gettimeofday(&etime,NULL);
+        timersub(&etime, &stime, &diff);
+        timeradd(&totTime, &diff, &totTime);
+
+        if ( timercmp(&maxTime, &diff, <) )
+        {
+            timerclear(&maxTime);
+            timeradd(&maxTime, &diff, &maxTime);
+        }
+        if ( timercmp(&minTime, &diff, >) )
+        {
+            timerclear(&minTime);
+            timeradd(&minTime, &diff, &minTime);
+        }
+        timeInSec  = (diff.tv_sec*1000+diff.tv_usec/1000)/1000.0;
+        printf("%10d%16.1f%16.2f\n", i+1, timeInSec, gflop/timeInSec);
+        fflush(stdout);
+    }
+
+    printf("\n");
+
+    minTimeInSec  = (minTime.tv_sec*1000+minTime.tv_usec/1000)/1000.0;
+    maxTimeInSec  = (maxTime.tv_sec*1000+maxTime.tv_usec/1000)/1000.0;
+    timeInSec     = (totTime.tv_sec*1000+totTime.tv_usec/1000)/1000.0/ LOOP_COUNT;
+
+    printf("[Min time     ]: %.2f secs \n", minTimeInSec);
+    printf("[Max time     ]: %.2f secs \n", maxTimeInSec);
+    printf("[Avg time     ]: %.2f secs \n", timeInSec);
+    printf("[Total time   ]: %.2f secs \n", timeInSec*LOOP_COUNT);
+    printf("\n");
+    printf("[Min GFlop/sec]: %.3f \n", gflop/maxTimeInSec);
+    printf("[Max GFlop/sec]: %.3f \n", gflop/minTimeInSec);
+    printf("[Avg GFlop/sec]: %.3f \n", gflop/timeInSec);
 
     free(P);
     free(A);
