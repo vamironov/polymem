@@ -30,7 +30,9 @@ int main(int argc, char* argv[])
     }
     if (argc >= 4) LOOP_COUNT = atoi(argv[3]);
 
-    posix_memalign((void *) &P, ALIGN, sizeof(double)*(n+1));
+    int npad =  ROUNDTOMUL(n+1, TMPLEN);
+
+    posix_memalign((void *) &P, ALIGN, sizeof(double)*(npad));
     posix_memalign((void *) &A, ALIGN, sizeof(double)*((size_t) TSIZE));
 
     printf("\n");
@@ -50,6 +52,7 @@ int main(int argc, char* argv[])
 
     set_matrix(TSIZE,A);
 
+    for (int i=0; i<npad; i++) P[i]=0.0;
     set_poly(n,P);
 
     printf("\n --- READ ONLY PATTERN ---\n");

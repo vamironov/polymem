@@ -3,8 +3,12 @@
 
 #define FLOAT_TYPE double
 
+#ifdef __INTEL_COMPILER
+#define TMPLEN 8
+#else
 #define TMPLEN 64
-//#define TMPLEN 8
+#endif
+
 #define ALIGN  64
 #define CHUNKSIZE 100
 

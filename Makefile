@@ -1,6 +1,6 @@
 CC = icc
 LD = icc
-CFLAGS = -g -xhost -ipo -O3 -std=gnu99 -qopenmp -static-intel -ansi-alias #-qopt-streaming-stores=always
+CFLAGS = -g -xhost -ipo -O3 -std=gnu99 -qopenmp -static-intel -ansi-alias -qopt-assume-safe-padding -qopt-report=5 -qopt-malloc-options=4 #-qopt-streaming-stores=always
 
 #CC = gcc
 #LD = gcc
