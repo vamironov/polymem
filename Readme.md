@@ -13,7 +13,7 @@ By varying it one can find how balanced are
 compute and memory subsystems of the computer.
 
 
-REQUREMENTS
+REQUIREMENTS
 ------------
 OpenMP-aware C compiler, GNU make
 
@@ -25,7 +25,7 @@ the source code directory.
 
 RUNNING
 -------
-Two types of memory access patterns are awailable:
+Two types of memory access patterns are available:
  ### Read-only access patter
  The input data is stored in one large array in memory.
  The calculation results are discarded. To run benchmark, type
@@ -38,9 +38,9 @@ Two types of memory access patterns are awailable:
  - [int] Repeats: number of times the test will run.
 
 
- ### Read-write access patter
+ ### Read-write access pattern
  The input data and the results are stored in two arrays
- in memory. The memory requrements are thus 2x bigger
+ in memory. The memory requirements are thus 2x bigger
  than in read-only test. To run the benchmark, type
 
        ./poly_rw.x [polynomial degree] [array size] [repeats]
